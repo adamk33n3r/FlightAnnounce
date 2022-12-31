@@ -1,0 +1,12 @@
+## Interface: 30400
+## Title: FlightAnnounce
+## Author: adamk33n3r
+## Notes: Announces when you take a flight path to part/raid chat.
+## Version: 1.1.0
+## OptionalDeps: InFlight
+## SavedVariables: FlightAnnounceDB
+## X-Issues: https://github.com/adamk33n3r/FlightAnnounce/issues
+## X-Website: https://github.com/adamk33n3r/FlightAnnounce
+
+Config.lua
+FlightAnnounce.lua

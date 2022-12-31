@@ -1,0 +1,33 @@
+<Project ToolsVersion="4.0" DefaultTargets="Deploy" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Default</Configuration>
+    <Name>FlightAnnounce</Name>
+    <ProjectGuid>ef714312-0afd-4a86-b882-4021e3b382c1</ProjectGuid>
+    <AssemblyName>FlightAnnounce</AssemblyName>
+    <RootNamespace>FlightAnnounce</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Default' ">
+    <OutputPath>.</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="Config.lua">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="FlightAnnounce.lua">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="FlightAnnounce.toc">
+      <SubType>TableOfContents</SubType>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(DevEnvDir)\Extensions\Tools\MSBuild\AddonStudio\Wow\3.0\WowAddonStudio.targets" />
+  <!--
+  To modify your build process, add your task inside one of the targets below and uncomment it.
+  <Target Name="BeforeClean"></Target>
+  <Target Name="AfterClean"></Target>
+  <Target Name="BeforeRebuild"></Target>
+  <Target Name="AfterRebuild"></Target>
+  <Target Name="BeforeDeploy"></Target>
+  <Target Name="AfterDeploy"></Target>
+  -->
+</Project>

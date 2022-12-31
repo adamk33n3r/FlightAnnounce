@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# WowAddOnStudio Solution File, Format Version 11.00
+VisualStudioVersion = 17.4.33205.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{E6E1D386-69D8-4755-9E61-0950293915FC}") = "FlightAnnounce", "FlightAnnounce.wowproj", "{EF714312-0AFD-4A86-B882-4021E3B382C1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Default|Any CPU = Default|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EF714312-0AFD-4A86-B882-4021E3B382C1}.Default|Any CPU.ActiveCfg = Default|Any CPU
+		{EF714312-0AFD-4A86-B882-4021E3B382C1}.Default|Any CPU.Build.0 = Default|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84BEB53B-D94C-4A91-85A7-3C40DE3B8F57}
+	EndGlobalSection
+EndGlobal
