@@ -7,6 +7,9 @@
 ## SavedVariables: FlightAnnounceDB
 ## X-Issues: https://github.com/adamk33n3r/FlightAnnounce/issues
 ## X-Website: https://github.com/adamk33n3r/FlightAnnounce
+## X-Curse-Project-ID: 784676
+## X-WoWI-ID: 26513
+## X-Wago-ID: BO67MyG3
 
 Config.lua
 FlightAnnounce.lua

@@ -14,12 +14,13 @@ ignore: # Files and directories beginning with a dot (such as .git) are automati
   - FlightAnnounce.wowproj
   - FlightAnnounce.wowproj.user
   - FlightAnnounce.wowsln
-  - "logo.*"
+  - logo.png
+  - logo.pdn
 # required-dependencies:
 #   - 221710-dear-cupcake
 optional-dependencies:    
   - inflight-taxi-timer
 # manual-changelog: CHANGELOG.txt
-license-output: LICENSE.txt
+# license-output: LICENSE.txt
 # tools-used:
 #   - data-tools
