@@ -62,11 +62,18 @@ frame:SetScript("OnEvent", frame.OnEvent)
 frame:SetScript("OnUpdate", function(self, elapsed)
     if eventSent == false and UnitOnTaxi("player") == true then
         eventSent = true
-        SendAnnouncement(BuildMessage(taxiSrc, taxiDst))
+        if taxiSrc ~= nil and taxiDst ~= nil then
+			SendAnnouncement(BuildMessage(taxiSrc, taxiDst))
+        end
     elseif eventSent == true and UnitOnTaxi("player") == false then
         eventSent = false
-        local message = format("The bird has landed at %s", taxiDst)
-        SendAnnouncement(message)
+        local message
+        if taxiDst ~= nil then
+			message = format("The bird has landed at %s", taxiDst)
+        else
+			message = "The bird has landed"
+		end
+		SendAnnouncement(message)
         taxiSrc = nil
         taxiDst = nil
     end
@@ -132,16 +139,12 @@ t = {
     ["Stormwind City"]               = {{ find = "I'd like to take a flight around Stormwind Harbor",                s = "Stormwind City",             d = "Return" }},
     ["Sun's Reach Harbor"]           = {{ find = "Speaking of action, I've been ordered to undertake an air strike", s = "Shattered Sun Staging Area", d = "Return" },
                                         { find = "I need to intercept the Dawnblade reinforcements",                 s = "Shattered Sun Staging Area", d = "The Sin'loren" }},
-    ["The Sin'loren"]                = {{ find ="Ride the dragonhawk to Sun's Reach",                                s = "The Sin'loren",              d = "Shattered Sun Staging Area" }},
+    ["The Sin'loren"]                = {{ find = "Ride the dragonhawk to Sun's Reach",                               s = "The Sin'loren",              d = "Shattered Sun Staging Area" }},
     ["Valgarde"]                     = {{ find = "Take me to the Explorers' League Outpost",                         s = "Valgarde",                   d = "Explorers' League Outpost" }},
 }
 end
 
-hooksecurefunc("GossipTitleButton_OnClick", function(this, button)
-    if this.type ~= "Gossip" then
-        return
-    end
-
+hooksecurefunc(GossipOptionButtonMixin, "OnClick", function (this, button)
     local subzone = GetMinimapZoneText()
     local tsz = t[subzone]
     if not tsz then
@@ -163,6 +166,7 @@ hooksecurefunc("GossipTitleButton_OnClick", function(this, button)
     end
 
     if source and destination then
-        SendAnnouncement(BuildMessage(source, destination))
+        taxiSrc = source
+        taxiDst = destination
     end
 end)

@@ -1,8 +1,8 @@
-## Interface: 30400
+## Interface: 30401
 ## Title: FlightAnnounce
 ## Author: adamk33n3r
 ## Notes: Announces when you take a flight path to part/raid chat.
-## Version: 1.1.0
+## Version: 1.1.1
 ## OptionalDeps: InFlight
 ## SavedVariables: FlightAnnounceDB
 ## X-Issues: https://github.com/adamk33n3r/FlightAnnounce/issues
