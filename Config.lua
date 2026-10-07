@@ -13,7 +13,15 @@ function CreateConfig(version)
 	panel.name = 'FlightAnnounce'
 	-- panel.okay = function (frame)frame.originalValue = MY_VARIABLE end    -- [[ When the player clicks okay, set the original value to the current setting ]] --
 	-- panel.cancel = function (frame) MY_VARIABLE = frame.originalValue end    -- [[ When the player clicks cancel, set the current setting to the original value ]] --
-    InterfaceOptions_AddCategory(panel)
+    -- Forever has no Interface Options frame. The same canvas still works once it is a Settings category.
+    -- Wrath does not have Settings, so it keeps the original registration.
+    if Settings and Settings.RegisterCanvasLayoutCategory then
+        local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name, panel.name)
+        category.ID = panel.name
+        Settings.RegisterAddOnCategory(category)
+    else
+        InterfaceOptions_AddCategory(panel)
+    end
 
 	local TitleText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	TitleText:SetJustifyH("LEFT")
@@ -24,7 +32,7 @@ function CreateConfig(version)
 	TitleSubText:SetPoint("TOPLEFT", TitleText, 'BOTTOMLEFT', 0, -8)
 	TitleSubText:SetText('These are general options for FlightAnnounce.')
 	TitleSubText:SetTextColor(1,1,1,1) 
-    
+
 	local AlarmText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	AlarmText:SetJustifyH("LEFT")
 	AlarmText:SetPoint("TOPLEFT", TitleSubText, 'BOTTOMLEFT', 0, -8)

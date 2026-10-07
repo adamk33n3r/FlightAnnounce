@@ -27,12 +27,31 @@ local function Print(...)
     print(COLOR_ADDON .. "<FlightAnnounce>|r:", ...)
 end
 
+-- GetAddOnMetadata was removed on the modern client Forever uses. Wrath still has the global.
+local function GetAddonVersion()
+    if C_AddOns and C_AddOns.GetAddOnMetadata then
+        return C_AddOns.GetAddOnMetadata(name, "version")
+    end
+    return GetAddOnMetadata(name, "version")
+end
+
+local function OpenConfig()
+    -- Forever registers the panel through Settings. Wrath still uses the old options frame,
+    -- which often needs a second call before the category is selected after a reload.
+    if Settings and Settings.OpenToCategory then
+        Settings.OpenToCategory("FlightAnnounce")
+        return
+    end
+    InterfaceOptionsFrame_OpenToCategory("FlightAnnounce")
+    InterfaceOptionsFrame_OpenToCategory("FlightAnnounce")
+end
+
 frame:RegisterEvent("ADDON_LOADED")
 -- frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("TAXIMAP_OPENED")
 function frame:OnEvent(event, arg1, arg2)
     if event == "ADDON_LOADED" and arg1 == "FlightAnnounce" then
-        local version = GetAddOnMetadata(name, "version")
+        local version = GetAddonVersion()
         if FlightAnnounceDB == nil then
             FlightAnnounceDB = { version = version, partyChat = true, raidChat = false, selfChat = true }
         end
@@ -85,9 +104,7 @@ function SlashCmdList.FLIGHTANNOUNCE(msg, editbox)
     local _, _, cmd, args = string.find(msg, "%s?(%w+)%s?(.*)")
 
     if cmd == "config" or cmd == nil then
-        -- Called twice because sometimes (like after a /reload) it doesn't work right
-        InterfaceOptionsFrame_OpenToCategory("FlightAnnounce")
-        InterfaceOptionsFrame_OpenToCategory("FlightAnnounce")
+        OpenConfig()
     elseif cmd == "help" then
         print("Available commands:")
         print("    /flightannounce config - Open up the config")
@@ -144,18 +161,17 @@ t = {
 }
 end
 
-hooksecurefunc(GossipOptionButtonMixin, "OnClick", function (this, button)
+local function OnGossipOptionClicked(text)
     local subzone = GetMinimapZoneText()
     local tsz = t[subzone]
     if not tsz then
         return
     end
 
-    local text = this:GetText()
     if not text or text == "" then
         return
     end
-    
+
     local source, destination
     for _, sz in ipairs(tsz) do
         if strfind(text, sz.find, 1, true) then
@@ -169,4 +185,24 @@ hooksecurefunc(GossipOptionButtonMixin, "OnClick", function (this, button)
         taxiSrc = source
         taxiDst = destination
     end
-end)
+end
+
+-- Forever's gossip buttons are the mixin. Wrath still creates GossipTitleButton1..N,
+-- and hooking a missing mixin would stop the addon from loading there.
+if GossipOptionButtonMixin then
+    hooksecurefunc(GossipOptionButtonMixin, "OnClick", function(this)
+        OnGossipOptionClicked(this:GetText())
+    end)
+else
+    local index = 1
+    while true do
+        local button = _G["GossipTitleButton" .. index]
+        if not button then
+            break
+        end
+        button:HookScript("OnClick", function(self)
+            OnGossipOptionClicked(self:GetText())
+        end)
+        index = index + 1
+    end
+end
