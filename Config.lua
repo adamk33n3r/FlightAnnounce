@@ -6,53 +6,76 @@ local function HandleUpgrade(version)
     FlightAnnounceDB.version = version
 end
 
-function CreateConfig(version)
-    HandleUpgrade(version)
+local function AddSettingsCheckbox(category, variable, name, tooltip, defaultValue)
+    -- The Settings variable is prefixed so it does not collide with other addons.
+    -- The table key stays the FlightAnnounceDB field SendAnnouncement already reads.
+    local setting = Settings.RegisterAddOnSetting(category, "FlightAnnounce_" .. variable, variable, FlightAnnounceDB, type(defaultValue), name, defaultValue)
+    Settings.CreateCheckbox(category, setting, tooltip)
+end
 
-	local panel = CreateFrame("Frame", nil, UIParent)
-	panel.name = 'FlightAnnounce'
-	-- panel.okay = function (frame)frame.originalValue = MY_VARIABLE end    -- [[ When the player clicks okay, set the original value to the current setting ]] --
-	-- panel.cancel = function (frame) MY_VARIABLE = frame.originalValue end    -- [[ When the player clicks cancel, set the current setting to the original value ]] --
-    -- Forever has no Interface Options frame. The same canvas still works once it is a Settings category.
-    -- Wrath does not have Settings, so it keeps the original registration.
-    if Settings and Settings.RegisterCanvasLayoutCategory then
-        local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name, panel.name)
-        category.ID = panel.name
-        Settings.RegisterAddOnCategory(category)
-    else
-        InterfaceOptions_AddCategory(panel)
+-- Forever's settings panel is the 12.1 UI. OptionsCheckButtonTemplate was removed
+-- in that rewrite, so a canvas of classic checkboxes dies at the first CreateFrame
+-- and only the header font strings remain.
+local function CreateModernConfig()
+    local category, layout = Settings.RegisterVerticalLayoutCategory("FlightAnnounce")
+    if layout and CreateSettingsListSectionHeaderInitializer then
+        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Chat Channels"))
     end
 
-	local TitleText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-	TitleText:SetJustifyH("LEFT")
-	TitleText:SetPoint("TOPLEFT", 16, -16)
-	TitleText:SetText('FlightAnnounce')
-	local TitleSubText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	TitleSubText:SetJustifyH("LEFT")
-	TitleSubText:SetPoint("TOPLEFT", TitleText, 'BOTTOMLEFT', 0, -8)
-	TitleSubText:SetText('These are general options for FlightAnnounce.')
-	TitleSubText:SetTextColor(1,1,1,1) 
+    AddSettingsCheckbox(category, "partyChat", "Party Chat", "Send to Party Chat if you are in a party", true)
+    AddSettingsCheckbox(category, "raidChat", "Raid Chat", "Send to Raid Chat if you are in a raid group", false)
+    AddSettingsCheckbox(category, "selfChat", "Self", "Print to your chat if you are not in a group", true)
 
-	local AlarmText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	AlarmText:SetJustifyH("LEFT")
-	AlarmText:SetPoint("TOPLEFT", TitleSubText, 'BOTTOMLEFT', 0, -8)
+    Settings.RegisterAddOnCategory(category)
+    FlightAnnounceSettingsCategory = category
+end
+
+local function CreateLegacyConfig()
+    local panel = CreateFrame("Frame", nil, UIParent)
+    panel.name = "FlightAnnounce"
+    InterfaceOptions_AddCategory(panel)
+
+    local TitleText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    TitleText:SetJustifyH("LEFT")
+    TitleText:SetPoint("TOPLEFT", 16, -16)
+    TitleText:SetText("FlightAnnounce")
+    local TitleSubText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    TitleSubText:SetJustifyH("LEFT")
+    TitleSubText:SetPoint("TOPLEFT", TitleText, "BOTTOMLEFT", 0, -8)
+    TitleSubText:SetText("These are general options for FlightAnnounce.")
+    TitleSubText:SetTextColor(1, 1, 1, 1)
+
+    local AlarmText = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    AlarmText:SetJustifyH("LEFT")
+    AlarmText:SetPoint("TOPLEFT", TitleSubText, "BOTTOMLEFT", 0, -8)
     AlarmText:SetText("Chat Channels")
 
-    local partyCheck = CreateCheck(panel, AlarmText, 'Send to Party Chat if you are in a party', 'Party Chat')
-    local raidCheck = CreateCheck(panel, partyCheck, 'Send to Raid Chat if you are in a raid group', 'Raid Chat')
-    local selfCheck = CreateCheck(panel, raidCheck, 'Print to your chat if you are not in a group', 'Self')
-    partyCheck:SetScript('OnClick', function(self, button)
+    local partyCheck = CreateCheck(panel, AlarmText, "Send to Party Chat if you are in a party", "Party Chat")
+    local raidCheck = CreateCheck(panel, partyCheck, "Send to Raid Chat if you are in a raid group", "Raid Chat")
+    local selfCheck = CreateCheck(panel, raidCheck, "Print to your chat if you are not in a group", "Self")
+    partyCheck:SetScript("OnClick", function(self, button)
         FlightAnnounceDB.partyChat = partyCheck:GetChecked()
     end)
-    raidCheck:SetScript('OnClick', function(self, button)
+    raidCheck:SetScript("OnClick", function(self, button)
         FlightAnnounceDB.raidChat = raidCheck:GetChecked()
     end)
-    selfCheck:SetScript('OnClick', function(self, button)
+    selfCheck:SetScript("OnClick", function(self, button)
         FlightAnnounceDB.selfChat = selfCheck:GetChecked()
     end)
     partyCheck:SetChecked(FlightAnnounceDB.partyChat)
     raidCheck:SetChecked(FlightAnnounceDB.raidChat)
     selfCheck:SetChecked(FlightAnnounceDB.selfChat)
+end
+
+function CreateConfig(version)
+    HandleUpgrade(version)
+
+    -- Wrath has no Settings table, so it keeps the Interface Options panel.
+    if Settings and Settings.RegisterVerticalLayoutCategory and Settings.CreateCheckbox then
+        CreateModernConfig()
+    else
+        CreateLegacyConfig()
+    end
 end
 
 function CreateCheck(parent, prevRegion, tip, text)

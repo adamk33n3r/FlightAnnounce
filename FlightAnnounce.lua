@@ -11,10 +11,6 @@ local eventSent = false
 local taxiSrc, taxiDst
 local oldTakeTaxiNode
 
-local function ShortenName(name)  -- shorten name to lighten saved vars and display
-    return gsub(name, ", .+", "")
-end
-
 local function FormatTime(secs)  -- simple time format
     if not secs then
         return "??"
@@ -36,10 +32,12 @@ local function GetAddonVersion()
 end
 
 local function OpenConfig()
-    -- Forever registers the panel through Settings. Wrath still uses the old options frame,
+    -- Forever registers a vertical Settings category. Wrath still uses the old options frame,
     -- which often needs a second call before the category is selected after a reload.
-    if Settings and Settings.OpenToCategory then
-        Settings.OpenToCategory("FlightAnnounce")
+    -- C_SettingsUtil.OpenSettingsPanel takes the numeric category ID. The category
+    -- table itself is out of that int32 range and errors inside OpenToCategory.
+    if Settings and Settings.OpenToCategory and FlightAnnounceSettingsCategory then
+        Settings.OpenToCategory(FlightAnnounceSettingsCategory:GetID())
         return
     end
     InterfaceOptionsFrame_OpenToCategory("FlightAnnounce")
@@ -113,10 +111,15 @@ end
 
 function BuildMessage(src, dst)
     local message = format("Taking flight from %s to %s", src, dst)
-    if InFlight then
-        local faction = UnitFactionGroup("player")
-        local ttl = InFlight.db.global[faction][ShortenName(src)][ShortenName(dst)]
-        message = message..format(" (%s)", FormatTime(ttl))
+    -- InFlight keys saved routes by node id, not by the names we announce.
+    -- GetFlightTime is the seconds it already resolved for this takeoff
+    -- (known time or hop estimate), including gossip flights via StartMiscFlight.
+    -- It is nil when InFlight has no time, and missing on older builds.
+    if InFlight and InFlight.GetFlightTime then
+        local ttl = InFlight:GetFlightTime()
+        if type(ttl) == "number" and ttl > 0 then
+            message = message..format(" (%s)", FormatTime(ttl))
+        end
     end
     return message
 end
