@@ -2,8 +2,8 @@
 ## Title: FlightAnnounce
 ## Author: adamk33n3r
 ## Notes: Announces when you take a flight path to part/raid chat.
-## Version: 1.2.1
-## OptionalDeps: InFlight
+## Version: 1.3.0-beta
+## OptionalDeps: InFlight, EllesmereUIForeverEssentials, EUIStandaloneForeverEssentials
 ## SavedVariables: FlightAnnounceDB
 ## X-Issues: https://github.com/adamk33n3r/FlightAnnounce/issues
 ## X-Website: https://github.com/adamk33n3r/FlightAnnounce

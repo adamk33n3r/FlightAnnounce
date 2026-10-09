@@ -9,7 +9,68 @@ local COLOR_ADDON = "|cff3bd0ed"
 
 local eventSent = false
 local taxiSrc, taxiDst
+-- Click-time Ellesmere estimate. InFlight's measured time wins at announce time.
+local taxiSeconds
 local oldTakeTaxiNode
+
+-- Yards per direct hop, keyed fromNodeID * 10000 + toNodeID. The taxi map is
+-- closed by announce time, so the sum happens on click. 30.4 is Ellesmere's
+-- speed until a landing teaches one. The standalone package renames the suite
+-- globals to EUICoreStandaloneForeverEssentials and its DB.
+local ELLESMERE_DEFAULT_SPEED = 30.4
+
+local function EllesmereTimerData()
+    if EllesmereUI and EllesmereUI._FlightTimerRoutes then
+        return EllesmereUI._FlightTimerRoutes, EllesmereUIDB and EllesmereUIDB.flightTimer
+    end
+    local core = EUICoreStandaloneForeverEssentials
+    if core and core._FlightTimerRoutes then
+        local db = EUICoreStandaloneForeverEssentialsDB
+        return core._FlightTimerRoutes, db and db.flightTimer
+    end
+end
+
+local function EllesmereSeconds(slot)
+    local routes, settings = EllesmereTimerData()
+    if not routes then
+        return nil
+    end
+    local mapID = GetTaxiMapID()
+    local nodes = mapID and C_TaxiMap.GetAllTaxiNodes(mapID)
+    if not nodes then
+        return nil
+    end
+    local idBySlot = {}
+    for _, node in ipairs(nodes) do
+        idBySlot[node.slotIndex] = node.nodeID
+    end
+    local hops = GetNumRoutes(slot)
+    if hops < 1 then
+        return nil
+    end
+    local yards = 0
+    for hop = 1, hops do
+        local fromID = idBySlot[TaxiGetNodeSlot(slot, hop, true)]
+        local toID = idBySlot[TaxiGetNodeSlot(slot, hop, false)]
+        local hopYards = fromID and toID and routes[fromID * 10000 + toID]
+        if type(hopYards) ~= "number" then
+            return nil
+        end
+        yards = yards + hopYards
+    end
+    local speed = settings and settings.speed or ELLESMERE_DEFAULT_SPEED
+    if type(speed) ~= "number" or speed <= 0 then
+        return nil
+    end
+    -- Frequent Flier is trait node 110300 on tree 1188. Stored speed excludes it.
+    local mult = 1
+    local configID = C_Traits.GetConfigIDByTreeID(1188)
+    local node = configID and C_Traits.GetNodeInfo(configID, 110300)
+    if node and (node.activeRank or 0) > 0 then
+        mult = 1.2
+    end
+    return yards / (speed * mult)
+end
 
 local function FormatTime(secs)  -- simple time format
     if not secs then
@@ -57,11 +118,13 @@ function frame:OnEvent(event, arg1, arg2)
         oldTakeTaxiNode = TakeTaxiNode
         TakeTaxiNode = function(slot)
             taxiDst = TaxiNodeName(slot)
+            taxiSeconds = EllesmereSeconds(slot)
             oldTakeTaxiNode(slot)
         end
         print(COLOR_ADDON .. "<FlightAnnounce>|r Version " .. version .. " has been loaded!")
     elseif event == "TAXIMAP_OPENED" then
         taxiSrc = nil
+        taxiSeconds = nil
         for i = 1, NumTaxiNodes(), 1 do
             local tb = _G["TaxiButton"..i]
             if TaxiNodeGetType(i) == "CURRENT" then
@@ -93,6 +156,7 @@ frame:SetScript("OnUpdate", function(self, elapsed)
 		SendAnnouncement(message)
         taxiSrc = nil
         taxiDst = nil
+        taxiSeconds = nil
     end
 end)
 
@@ -115,11 +179,18 @@ function BuildMessage(src, dst)
     -- GetFlightTime is the seconds it already resolved for this takeoff
     -- (known time or hop estimate), including gossip flights via StartMiscFlight.
     -- It is nil when InFlight has no time, and missing on older builds.
+    local ttl
     if InFlight and InFlight.GetFlightTime then
-        local ttl = InFlight:GetFlightTime()
-        if type(ttl) == "number" and ttl > 0 then
-            message = message..format(" (%s)", FormatTime(ttl))
+        local inflight = InFlight:GetFlightTime()
+        if type(inflight) == "number" and inflight > 0 then
+            ttl = inflight
         end
+    end
+    if not ttl and type(taxiSeconds) == "number" and taxiSeconds > 0 then
+        ttl = taxiSeconds
+    end
+    if ttl then
+        message = message..format(" (%s)", FormatTime(ttl))
     end
     return message
 end
@@ -187,6 +258,7 @@ local function OnGossipOptionClicked(text)
     if source and destination then
         taxiSrc = source
         taxiDst = destination
+        taxiSeconds = nil
     end
 end
 
